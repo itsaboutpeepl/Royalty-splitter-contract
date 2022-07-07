@@ -55,6 +55,8 @@ abstract contract TokenPaymentSplitter {
         _payees.push(account);
         _shares[account] = shares_;
         _totalShares = _totalShares + shares_;
+
+        emit PayeeAdded((account), shares_);
     }
 
     function release(address account) public virtual {
@@ -69,7 +71,13 @@ abstract contract TokenPaymentSplitter {
         require(payment != 0, "TokenPaymentSplitter: account is not due payment");
             _tokenReleased[account] = _tokenReleased[account] + payment;
             IERC20(paymentToken).safeTransfer(account, payment);
+
+            emit PaymentReleased(account, payment);
         }
+    
+    event PayeeAdded(address account, uint256 shares);
+    event PaymentReleased(address to, uint256 amount);
+
     
 }
 
