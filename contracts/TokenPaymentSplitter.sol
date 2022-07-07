@@ -9,7 +9,7 @@ abstract contract TokenPaymentSplitter {
     uint256 internal _totalTokenReleased;
     address[] internal _payees;
     mapping(address => uint256) internal _shares;
-    mapping(address => uint256) internal _totalReleased;
+    mapping(address => uint256) internal _tokenReleased;
 
     constructor(
         address[] memory payees,
@@ -53,6 +53,23 @@ abstract contract TokenPaymentSplitter {
             "TokenPaymentSplitter: account already has shares"
         );
         _payees.push(account);
+        _shares[account] = shares_;
+        _totalShares = _totalShares + shares_;
     }
+
+    function release(address account) public virtual {
+        require(
+            _shares[account] > 0, "TokenPaymentSplitter: account has no shares"
+        );
+
+        uint256 tokenTotalReceived = IERC20(paymentToken).balanceOf(address(this)) + _totalTokenReleased;
+
+        uint256 payment = (tokenTotalReceived * _shares[account]) / _totalShares - _tokenReleased[account];
+
+        require(payment != 0, "TokenPaymentSplitter: account is not due payment");
+            _tokenReleased[account] = _tokenReleased[account] + payment;
+            IERC20(paymentToken).safeTransfer(account, payment);
+        }
+    
 }
 
